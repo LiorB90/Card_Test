@@ -20,10 +20,12 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
+#include <stdlib.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -49,6 +51,8 @@
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart1;
 
+osThreadId LedTaskHandle;
+osThreadId PrintTaskHandle;
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -57,9 +61,10 @@ UART_HandleTypeDef huart1;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART1_UART_Init(void);
+void StartLedTask(void const * argument);
+void StartPrintTask(void const * argument);
+
 /* USER CODE BEGIN PFP */
-static void ButtonPressed(int* counter);
-static void ButtonReleased(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -73,10 +78,7 @@ static void ButtonReleased(void);
   */
 int main(void)
 {
-
   /* USER CODE BEGIN 1 */
-	  int counter = 0;
-	  int isPressed = 0;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -101,22 +103,44 @@ int main(void)
 
   /* USER CODE END 2 */
 
+  /* USER CODE BEGIN RTOS_MUTEX */
+  /* add mutexes, ... */
+  /* USER CODE END RTOS_MUTEX */
+
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* add semaphores, ... */
+  /* USER CODE END RTOS_SEMAPHORES */
+
+  /* USER CODE BEGIN RTOS_TIMERS */
+  /* start timers, add new ones, ... */
+  /* USER CODE END RTOS_TIMERS */
+
+  /* USER CODE BEGIN RTOS_QUEUES */
+  /* add queues, ... */
+  /* USER CODE END RTOS_QUEUES */
+
+  /* Create the thread(s) */
+  /* definition and creation of LedTask */
+  osThreadDef(LedTask, StartLedTask, osPriorityNormal, 0, 128);
+  LedTaskHandle = osThreadCreate(osThread(LedTask), NULL);
+
+  /* definition and creation of PrintTask */
+  osThreadDef(PrintTask, StartPrintTask, osPriorityIdle, 0, 128);
+  PrintTaskHandle = osThreadCreate(osThread(PrintTask), NULL);
+
+  /* USER CODE BEGIN RTOS_THREADS */
+  /* add threads, ... */
+  /* USER CODE END RTOS_THREADS */
+
+  /* Start scheduler */
+  osKernelStart();
+ 
+  /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
     /* USER CODE END WHILE */
-	  if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET && isPressed == 0)
-	  {
-		  ButtonPressed(&counter);
-		  isPressed = 1;
-		  HAL_Delay(100);
-	  }
-	  else if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_RESET && isPressed == 1)
-	  {
-		  ButtonReleased();
-		  isPressed = 0;
-	  }
 
     /* USER CODE BEGIN 3 */
   }
@@ -251,6 +275,57 @@ static void ButtonReleased(void)
 }
 
 /* USER CODE END 4 */
+
+/* USER CODE BEGIN Header_StartLedTask */
+/**
+* @brief Function implementing the LedTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartLedTask */
+void StartLedTask(void const * argument)
+{
+  /* USER CODE BEGIN 5 */
+  /* Infinite loop */
+  for(;;)
+  {
+	  if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET)
+	  {
+		  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+		osDelay(250);
+		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+		osDelay(500);
+	  }
+  }
+  /* USER CODE END 5 */ 
+}
+
+/* USER CODE BEGIN Header_StartPrintTask */
+/**
+* @brief Function implementing the PrintTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartPrintTask */
+void StartPrintTask(void const * argument)
+{
+  /* USER CODE BEGIN StartPrintTask */
+  int counter = 0;
+  char* buff[5];
+
+  /* Infinite loop */
+  for(;;)
+  {
+	  if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET)
+	  {
+		  ++counter;
+		  itoa(counter,buff, 10);
+		  HAL_UART_Transmit(&huart1, (uint8_t *)buff, 5, 0xFFFF);
+		  osDelay(250);
+	  }
+  }
+  /* USER CODE END StartPrintTask */
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.
