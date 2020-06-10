@@ -1,0 +1,48 @@
+# Ignore all
+*
+
+# git config --global credential.helper cache --timeout=3600000
+# Unignore all with extensions
+!*.c
+!*.h
+!.gitignore
+
+# Unignore all dirs
+!*/
+
+*.d
+*.out
+*.o
+*.so
+*.txt
+*.pdf
+*.json
+*.jpeg
+*.jpg
+*.gif
+*.png
+*.rar
+*.a
+*~
+*.log
+*.err
+*.tar
+*.zip
+*.32
+*.64
+*.exe
+*.gch
+*.cdr
+*.doc
+*.docx
+*.mwb
+*.bak
+*.sql
+*.dump
+*.md
+*.sh
+
+
+#Verify some important files
+!Makefile
+!makefile
