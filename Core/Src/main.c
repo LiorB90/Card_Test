@@ -75,6 +75,7 @@ int main(void)
 
   /* USER CODE BEGIN 1 */
   int counter = 0;
+  int isReleased = 1;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -83,7 +84,6 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -105,16 +105,17 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	  HAL_Delay(150);
-	  HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
-	  HAL_Delay(150);
-	  HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
-	  HAL_GPIO_TogglePin(LD4_GPIO_Port, LD4_Pin);
-	  printf("%d\r\n",++counter);
-	  if(counter == 100)
-		  break;
-
-    /* USER CODE BEGIN 3 */
+	  if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET && isReleased)
+	  {
+		  printf("%d\r\n",++counter);
+		  isReleased = 0;
+	  }
+	  HAL_Delay(100);
+	  if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_RESET && !isReleased)
+	  {
+		  isReleased = 1;
+	  }
+		  /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
 }
