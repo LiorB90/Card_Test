@@ -58,7 +58,8 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
-
+static void ButtonPressed(int* counter);
+static void ButtonReleased(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -74,7 +75,8 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-  int counter = 0;
+	  int counter = 0;
+	  int isPressed = 0;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -105,14 +107,17 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	  HAL_Delay(150);
-	  HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
-	  HAL_Delay(150);
-	  HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
-	  HAL_GPIO_TogglePin(LD4_GPIO_Port, LD4_Pin);
-	  printf("%d\r\n",++counter);
-	  if(counter == 100)
-		  break;
+	  if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET && isPressed == 0)
+	  {
+		  ButtonPressed(&counter);
+		  isPressed = 1;
+		  HAL_Delay(100);
+	  }
+	  else if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_RESET && isPressed == 1)
+	  {
+		  ButtonReleased();
+		  isPressed = 0;
+	  }
 
     /* USER CODE BEGIN 3 */
   }
@@ -235,6 +240,17 @@ PUTCHAR_PROTOTYPE
   HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, 0xFFFF);
   return ch;
 }
+
+static void ButtonPressed(int* counter)
+{
+	printf("%d\r\n",++*counter);
+	HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
+}
+static void ButtonReleased(void)
+{
+	HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
+}
+
 /* USER CODE END 4 */
 
 /**
