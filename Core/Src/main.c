@@ -39,14 +39,11 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-//#define printf myprintf
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart1;
-
 osThreadId LedTaskHandle;
-
 int g_counter;
 /* USER CODE BEGIN PV */
 
@@ -61,16 +58,11 @@ void StartLedTask(void const * argument);
 /* USER CODE BEGIN PFP */
 
 #ifdef __GNUC__
-
 /* With GCC/RAISONANCE, small printf
 (option LD Linker->Libraries->Smallprintf set to 'Yes') calls __io_putchar() */
-
 	#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
-
 #else
-
 	#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
-
 #endif /* __GNUC__ */
 
 /* USER CODE END PFP */
@@ -137,7 +129,7 @@ int main(void)
   /* USER CODE END RTOS_THREADS */
 
   /* Start scheduler */
-  printf("Press Counter Program - \r\n");
+  printf("\r\n");
   osKernelStart();
  
   /* We should never get here as control is now taken by the scheduler */
@@ -308,7 +300,6 @@ void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
-
 	HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
   /* USER CODE END Error_Handler_Debug */
 }
