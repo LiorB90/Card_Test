@@ -25,17 +25,11 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
-#include <stdlib.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 
-#ifdef __GNUC__
-  #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
-#else
-  #define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
-#endif /* __GNUC__ */
 
 /* USER CODE END PTD */
 
@@ -45,14 +39,15 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+//#define printf myprintf
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart1;
 
 osThreadId LedTaskHandle;
-osThreadId PrintTaskHandle;
+
+int g_counter;
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -62,9 +57,22 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART1_UART_Init(void);
 void StartLedTask(void const * argument);
-void StartPrintTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
+
+#ifdef __GNUC__
+
+/* With GCC/RAISONANCE, small printf
+(option LD Linker->Libraries->Smallprintf set to 'Yes') calls __io_putchar() */
+
+	#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+
+#else
+
+	#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
+
+#endif /* __GNUC__ */
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -121,18 +129,15 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of LedTask */
-  osThreadDef(LedTask, StartLedTask, osPriorityNormal, 0, 128);
+  osThreadDef(LedTask, StartLedTask, osPriorityNormal, 0, 512);
   LedTaskHandle = osThreadCreate(osThread(LedTask), NULL);
-
-  /* definition and creation of PrintTask */
-  osThreadDef(PrintTask, StartPrintTask, osPriorityIdle, 0, 128);
-  PrintTaskHandle = osThreadCreate(osThread(PrintTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 
   /* Start scheduler */
+  printf("Press Counter Program - \r\n");
   osKernelStart();
  
   /* We should never get here as control is now taken by the scheduler */
@@ -257,23 +262,16 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
 PUTCHAR_PROTOTYPE
-{
-  HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, 0xFFFF);
-  return ch;
-}
 
-static void ButtonPressed(int* counter)
 {
-	printf("%d\r\n",++*counter);
-	HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
-}
-static void ButtonReleased(void)
-{
-	HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
-}
+ /* Place your implementation of fputc here */
+ /* e.g. write a character to the EVAL_COM1 and Loop until the end of transmission */
+ HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, 0xFFFF);
 
+ return ch;
+
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartLedTask */
@@ -291,40 +289,15 @@ void StartLedTask(void const * argument)
   {
 	  if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET)
 	  {
-		  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-		osDelay(250);
+		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+		osDelay(100);
 		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-		osDelay(500);
+		osDelay(100);
+		printf("Press Counter = %d \r\n",++g_counter);
+		osDelay(100);
 	  }
   }
   /* USER CODE END 5 */ 
-}
-
-/* USER CODE BEGIN Header_StartPrintTask */
-/**
-* @brief Function implementing the PrintTask thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_StartPrintTask */
-void StartPrintTask(void const * argument)
-{
-  /* USER CODE BEGIN StartPrintTask */
-  int counter = 0;
-  char* buff[5];
-
-  /* Infinite loop */
-  for(;;)
-  {
-	  if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET)
-	  {
-		  ++counter;
-		  itoa(counter,buff, 10);
-		  HAL_UART_Transmit(&huart1, (uint8_t *)buff, 5, 0xFFFF);
-		  osDelay(250);
-	  }
-  }
-  /* USER CODE END StartPrintTask */
 }
 
 /**
@@ -336,6 +309,7 @@ void Error_Handler(void)
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
 
+	HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, GPIO_PIN_SET);
   /* USER CODE END Error_Handler_Debug */
 }
 
