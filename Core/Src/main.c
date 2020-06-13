@@ -313,6 +313,10 @@ void StartptintTask(void const * argument)
 	  if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET)
 	  {
 		printf("Press Counter = %d \r\n",++g_counter);
+		while(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET)
+		{
+
+		}
 		vTaskDelay(g_delay);
 	  }
   }
