@@ -43,8 +43,11 @@
 
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart1;
+
 osThreadId LedTaskHandle;
+osThreadId ptintTaskHandle;
 int g_counter;
+int g_delay = 250;
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -54,6 +57,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART1_UART_Init(void);
 void StartLedTask(void const * argument);
+void StartptintTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -121,15 +125,19 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of LedTask */
-  osThreadDef(LedTask, StartLedTask, osPriorityNormal, 0, 512);
+  osThreadDef(LedTask, StartLedTask, osPriorityNormal, 0, 128);
   LedTaskHandle = osThreadCreate(osThread(LedTask), NULL);
+
+  /* definition and creation of ptintTask */
+  osThreadDef(ptintTask, StartptintTask, osPriorityIdle, 0, 128);
+  ptintTaskHandle = osThreadCreate(osThread(ptintTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 
   /* Start scheduler */
-  printf("\r\n");
+  printf("\n");
   osKernelStart();
  
   /* We should never get here as control is now taken by the scheduler */
@@ -282,14 +290,33 @@ void StartLedTask(void const * argument)
 	  if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET)
 	  {
 		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-		osDelay(100);
+		vTaskDelay(g_delay);
 		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-		osDelay(100);
-		printf("Press Counter = %d \r\n",++g_counter);
-		osDelay(100);
 	  }
   }
   /* USER CODE END 5 */ 
+}
+
+/* USER CODE BEGIN Header_StartptintTask */
+/**
+* @brief Function implementing the ptintTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartptintTask */
+void StartptintTask(void const * argument)
+{
+  /* USER CODE BEGIN StartptintTask */
+  /* Infinite loop */
+  for(;;)
+  {
+	  if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET)
+	  {
+		printf("Press Counter = %d \r\n",++g_counter);
+		vTaskDelay(g_delay);
+	  }
+  }
+  /* USER CODE END StartptintTask */
 }
 
 /**
