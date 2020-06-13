@@ -24,7 +24,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <stdio.h>
+#include <stdio.h> // for printf
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -43,12 +43,10 @@
 
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart1;
-
-osThreadId LedTaskHandle;
-osThreadId ptintTaskHandle;
-int g_counter;
-int g_delay = 250;
+osThreadId mainTaskHandle;
 /* USER CODE BEGIN PV */
+int g_counter;
+int g_delay = 50;
 
 /* USER CODE END PV */
 
@@ -56,10 +54,11 @@ int g_delay = 250;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART1_UART_Init(void);
-void StartLedTask(void const * argument);
-void StartptintTask(void const * argument);
+void StartMainTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
+void StartLedTask(void* argument);
+void StartPrintTask(void* argument);
 
 #ifdef __GNUC__
 /* With GCC/RAISONANCE, small printf
@@ -124,13 +123,9 @@ int main(void)
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* definition and creation of LedTask */
-  osThreadDef(LedTask, StartLedTask, osPriorityNormal, 0, 128);
-  LedTaskHandle = osThreadCreate(osThread(LedTask), NULL);
-
-  /* definition and creation of ptintTask */
-  osThreadDef(ptintTask, StartptintTask, osPriorityIdle, 0, 128);
-  ptintTaskHandle = osThreadCreate(osThread(ptintTask), NULL);
+  /* definition and creation of mainTask */
+  osThreadDef(mainTask, StartMainTask, osPriorityNormal, 0, 128);
+  mainTaskHandle = osThreadCreate(osThread(mainTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -272,55 +267,55 @@ PUTCHAR_PROTOTYPE
  return ch;
 
 }
-/* USER CODE END 4 */
 
-/* USER CODE BEGIN Header_StartLedTask */
-/**
-* @brief Function implementing the LedTask thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_StartLedTask */
-void StartLedTask(void const * argument)
+void StartLedTask(void* argument)
 {
-  /* USER CODE BEGIN 5 */
-  /* Infinite loop */
-  for(;;)
-  {
-	  if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET)
-	  {
-		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-		vTaskDelay(g_delay);
-		HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-	  }
-  }
-  /* USER CODE END 5 */ 
+	for(;;)
+	{
+		if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET)
+		{
+			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+			osDelay(g_delay);
+			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+		}
+	}
 }
 
-/* USER CODE BEGIN Header_StartptintTask */
-/**
-* @brief Function implementing the ptintTask thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_StartptintTask */
-void StartptintTask(void const * argument)
+void StartPrintTask(void* argument)
 {
-  /* USER CODE BEGIN StartptintTask */
+	for(;;)
+	{
+		if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET)
+		{
+			printf("counter press = %d\r\n",++g_counter);
+			while(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET)
+			{
+
+			}
+			osDelay(g_delay);
+		}
+	}
+}
+/* USER CODE END 4 */
+
+/* USER CODE BEGIN Header_StartMainTask */
+/**
+  * @brief  Function implementing the mainTask thread.
+  * @param  argument: Not used 
+  * @retval None
+  */
+/* USER CODE END Header_StartMainTask */
+void StartMainTask(void const * argument)
+{
+  /* USER CODE BEGIN 5 */
+	xTaskCreate(StartLedTask, "LedTask", configMINIMAL_STACK_SIZE, NULL, osPriorityNormal, NULL);
+	xTaskCreate(StartPrintTask, "PrintTask", configMINIMAL_STACK_SIZE, NULL, osPriorityNormal, NULL);
   /* Infinite loop */
   for(;;)
   {
-	  if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET)
-	  {
-		printf("Press Counter = %d \r\n",++g_counter);
-		while(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET)
-		{
-
-		}
-		vTaskDelay(g_delay);
-	  }
+	  osDelay(3000);
   }
-  /* USER CODE END StartptintTask */
+  /* USER CODE END 5 */ 
 }
 
 /**
