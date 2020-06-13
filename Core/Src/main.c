@@ -43,6 +43,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart1;
+
 osThreadId mainTaskHandle;
 /* USER CODE BEGIN PV */
 int g_counter;
